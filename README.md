@@ -226,6 +226,7 @@ Get a written spec with visuals attached — mockups of the new layout next to s
 | `/om-auto-qa-pr 123` | [`om-prepare-test-env`](docs/skills/om-prepare-test-env.md), browser provider | fresh screenshots of a PR's UI to design-review, no source touched |
 | `/om-ux-setup` once, then `/om-ux-review-pr 123` | [`om-ux-setup`](docs/skills/om-ux-setup.md) extracts the repo's design contract; [`om-ux-review-pr`](docs/skills/om-ux-review-pr.md) walks the PR in a real browser | a design review judged against your own design system: evidence-tagged findings with done-when criteria |
 | `/om-ux-shape "Quick-add flow for the people list"` | [`om-ux-shape`](docs/skills/om-ux-shape.md) | a decided direction before anything is drawn: scope, states, riskiest-assumption test |
+| `/om-figma-design-with-ds "Orders list"` or `/om-figma-design-with-ds --audit <design link>` | [`om-figma-design-with-ds`](docs/skills/om-figma-design-with-ds.md) reads `.uxproof/` and, through a configured design-tool provider, the design file | a brief for a new screen using only your design system's tokens and components, or an audit of an existing design with a remediation plan |
 
 💡 Tip — ask for visuals explicitly to force mockups: `/om-auto-write-spec "Redesign the checkout summary panel — include mockups of the new layout and screenshots of the current one"`.
 
