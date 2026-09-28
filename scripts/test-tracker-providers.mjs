@@ -46,6 +46,13 @@ assert.doesNotMatch(
   "gitlab: stand-alone provider must not depend on the GitHub companion",
 );
 assert.doesNotMatch(gitlab, /(^|[`"\s])gh (api|pr|issue|label|repo|search|auth|run) /m, "gitlab: no gh CLI calls");
+const gitlabCreateIssue = gitlab.match(/#### create-issue[\s\S]*?#### close-issue/)[0];
+assert.doesNotMatch(
+  gitlabCreateIssue,
+  /\{assignee_ids:/,
+  "gitlab: issue creation must not use the Premium-only assignee_ids field",
+);
+assert.match(gitlabCreateIssue, /gl_assign issues "\$ISSUE_ID" add/, "gitlab: assign a created issue through the Free-compatible update helper");
 
 assert.match(setup, /`github`, `linear`, `jira`, `gitlab`, or custom/);
 assert.match(setup, /ships `github.md`, `gitlab.md`, `linear.md`, and `jira.md`/);
@@ -114,6 +121,7 @@ const body = input ? readFileSync(0, "utf8") : "";
 appendFileSync(process.env.GLAB_LOG, JSON.stringify({ method, path, body }) + "\\n");
 const fixtures = JSON.parse(readFileSync(process.env.GLAB_FIXTURES, "utf8"));
 const key = method + " " + path.split("?")[0];
+if (process.env.GLAB_FAIL_KEY === key) { process.stderr.write("forced failure " + key); process.exit(1); }
 if (key in fixtures) process.stdout.write(JSON.stringify(fixtures[key]));
 else if (method === "GET") { process.stderr.write("404 " + key); process.exit(1); }
 else process.stdout.write("{}");
@@ -130,7 +138,8 @@ const fixtures = {
     target_branch: "main", source_branch: "feat/thing", sha: "abc", diff_refs: { base_sha: "base" },
     source_project_id: 1, target_project_id: 1, allow_collaboration: false,
     detailed_merge_status: "not_approved", has_conflicts: false, labels: ["review"],
-    assignees: [{ username: "bot" }], references: { full: "g/p!7" }, changes_count: "2",
+    assignees: [{ username: "bot" }], reviewers: [{ id: 1, username: "bot" }],
+    references: { full: "g/p!7" }, changes_count: "2",
     created_at: "2026-09-01T10:00:00Z", updated_at: "2026-09-02T10:00:00Z", merged_at: null, closed_at: null,
     merge_commit_sha: null, squash_commit_sha: null, head_pipeline: { id: 99, project_id: 42 },
   },
@@ -165,6 +174,8 @@ const fixtures = {
     { iid: 7, title: "feat: thing", web_url: "https://gl.example/g/p/-/merge_requests/7", state: "opened" },
     { iid: 5, title: "old", web_url: "https://gl.example/g/p/-/merge_requests/5", state: "closed" },
   ],
+  [`POST ${P}/issues/3/notes`]: { id: 31 },
+  [`POST ${P}/merge_requests/7/notes`]: { id: 71 },
 };
 const fixturesFile = join(work, "fixtures.json");
 writeFileSync(fixturesFile, JSON.stringify(fixtures));
@@ -247,6 +258,17 @@ try {
   );
   assert.equal(JSON.parse(markerOnly.stdout).reviewDecision, "CHANGES_REQUESTED");
 
+  // Older GitLab versions can omit the reviewer-state endpoint; the MR's
+  // embedded reviewer list still authenticates the descriptor's verdict marker.
+  const noReviewerEndpoint = { ...fixtures };
+  delete noReviewerEndpoint[`GET ${P}/merge_requests/7/reviewers`];
+  noReviewerEndpoint[`GET ${P}/merge_requests/7/approvals`] = { approved: false, approved_by: [] };
+  writeFileSync(fixturesFile, JSON.stringify(noReviewerEndpoint));
+  const fallbackReviewers = runGitlab("gl_pr_json 7");
+  assert.equal(fallbackReviewers.status, 0, fallbackReviewers.stderr);
+  assert.equal(JSON.parse(fallbackReviewers.stdout).reviewDecision, "CHANGES_REQUESTED");
+  writeFileSync(fixturesFile, JSON.stringify(fixtures));
+
   // An APPROVED marker whose native approval was revoked no longer counts.
   const stale = withFixtures(
     {
@@ -278,6 +300,15 @@ try {
   const unreadable = runGitlab("apply_label review 7");
   assert.notEqual(unreadable.status, 0, "an unreadable label list must not read as a missing label");
   assert.equal(unreadable.writes.length, 0);
+  writeFileSync(fixturesFile, JSON.stringify(fixtures));
+  const noComments = { ...fixtures };
+  delete noComments[`GET ${P}/merge_requests/7/notes`];
+  writeFileSync(fixturesFile, JSON.stringify(noComments));
+  assert.notEqual(
+    runGitlab("gl_list_comments merge_requests 7").status,
+    0,
+    "an unreadable comment list must not read as no comments",
+  );
   writeFileSync(fixturesFile, JSON.stringify(fixtures));
 
   // Reads that answer "none found" must fail when the request fails, not look empty.
@@ -316,6 +347,8 @@ try {
   assert.equal(disabled.calls.length, 0, "labels.enabled false must skip every label call");
   const comma = runGitlab('apply_label "a,b" 7');
   assert.equal(comma.writes.length, 0);
+  const failedRemoval = runGitlab('remove_label review 7', { GLAB_FAIL_KEY: `PUT ${P}/merge_requests/7` });
+  assert.notEqual(failedRemoval.status, 0, "a failed label removal must block a pipeline-label transition");
 
   // set_pipeline_label removes every other pipeline label, then adds the target.
   const pipeline = runGitlab('set_pipeline_label 7 merge-queue');
@@ -330,9 +363,24 @@ try {
   assert.notEqual(runGitlab("gl_project", { REPO: "g/p;rm -rf /" }).status, 0);
   assert.notEqual(runGitlab("gl_iid 7x").status, 0);
   assert.equal(runGitlab("gl_handle merge_requests/7/42").status, 0);
-  for (const bad of ["merge_requests/7", "issues/x/1", "merge_requests/7/42/../1", "projects/1/2"]) {
+  for (const bad of ["merge_requests/7", "issues/x/1", "merge_requests/7/42x", "merge_requests/7/42/../1", "projects/1/2"]) {
     assert.notEqual(runGitlab(`gl_handle '${bad}'`).status, 0, `gl_handle must reject ${bad}`);
   }
+  assert.doesNotMatch(
+    gitlab,
+    /^gl_iid \{[^}\n]+\}$/gm,
+    "operation snippets must stop when an iid fails validation",
+  );
+
+  // Note writes return a validated handle and propagate API failures instead of
+  // letting a trailing jq invocation turn an empty response into success.
+  const noteScript = 'body=$(mktemp); printf %s hello > "$body"; gl_note merge_requests 7 "$body"; rc=$?; rm -f "$body"; exit "$rc"';
+  const note = runGitlab(noteScript);
+  assert.equal(note.status, 0, note.stderr);
+  assert.equal(note.stdout.trim(), "merge_requests/7/71");
+  const failedNote = runGitlab(noteScript, { GLAB_FAIL_KEY: `POST ${P}/merge_requests/7/notes` });
+  assert.notEqual(failedNote.status, 0, "a failed note write must not report a synthetic handle");
+  assert.equal(failedNote.stdout, "");
 
   // get-pr-checks: allow_failure failures are NEUTRAL, blocking failures FAILURE.
   const checks = runGitlab("gl_pr_checks 7");
