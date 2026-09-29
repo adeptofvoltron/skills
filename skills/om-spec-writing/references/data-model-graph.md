@@ -4,7 +4,7 @@ Called from `om-spec-writing` step 6, right after the spec's own `## 📝 Data M
 
 ## When to run
 
-Skip entirely when the Data Model section introduces no new or changed entities (pure UI/API-shape specs, config-only changes). Never generate an empty or trivial graph.
+Skip entirely when `--no-data-model-graph` was passed, or when the Data Model section introduces no new or changed entities (pure UI/API-shape specs, config-only changes). Never generate an empty or trivial graph.
 
 ## 1. Extract entities and relations from the spec
 
