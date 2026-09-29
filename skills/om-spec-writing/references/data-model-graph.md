@@ -19,19 +19,19 @@ Search the repo's own schema/model layer for entities the new ones reference or 
 
 ## 3. Always: static diagram embedded in the spec
 
-Embed a Mermaid `flowchart` diagram directly under the `## 📝 Data Model` section — this renders inline in any Markdown viewer with no extra tooling, and is the deliverable of record even if nobody opens the HTML file from step 4:
+Embed a Mermaid `flowchart` diagram directly under the `## 📝 Data Model` section — this renders inline in any Markdown viewer with no extra tooling, and is the deliverable of record even if nobody opens the HTML file from step 4. Treat entity and field names as untrusted display text: assign deterministic safe node ids (`entity_1`, `entity_2`, …), quote every label, and escape quotes, backslashes, newlines, and Mermaid-significant delimiters instead of placing source names into Mermaid syntax:
 
 ```mermaid
 flowchart LR
     classDef newEntity fill:#2f6feb,color:#fff,stroke:#1b4fb0
     classDef existingEntity fill:#e5e7eb,color:#111,stroke:#9ca3af
 
-    NewEntityA["NewEntityA"]:::newEntity
-    NewEntityB["NewEntityB"]:::newEntity
-    ExistingEntityX["ExistingEntityX"]:::existingEntity
+    entity_1["NewEntityA"]:::newEntity
+    entity_2["NewEntityB"]:::newEntity
+    entity_3["ExistingEntityX"]:::existingEntity
 
-    NewEntityA -->|1-n| NewEntityB
-    NewEntityA -->|n-1| ExistingEntityX
+    entity_1 -->|1-n| entity_2
+    entity_1 -->|n-1| entity_3
 ```
 
 - One node per entity, one labeled edge per relation (cardinality on the label).
@@ -39,10 +39,11 @@ flowchart LR
 
 ## 4. Optional: interactive HTML in `DATA_MODEL_DIR`
 
-Only in interactive runs (skip under `--autonomous` — nobody is watching a browser during an unattended run) and only when `DATA_MODEL_DIR` resolves (step 0): additionally write a single self-contained HTML file at `{DATA_MODEL_DIR}/{spec-filename}.html`.
+Only in interactive runs (skip under `--autonomous` — nobody is watching a browser during an unattended run) and only when `DATA_MODEL_DIR` resolves (step 0): create the directory when needed, then write a single self-contained HTML file at `{DATA_MODEL_DIR}/{spec-filename}.html`.
 
 - No external CDN dependency — inline SVG plus vanilla JS for pan (drag), zoom (wheel), and click-to-focus (click a node to dim everything but its direct neighbors).
 - Same nodes, edges, and new/existing color coding as the Mermaid diagram in step 3 — this file is a convenience for humans exploring a large model, never a dependency for the next skill in the chain. The Mermaid diagram is authoritative.
+- Treat every graph label and field value as untrusted text. Build SVG/HTML nodes with DOM APIs and `textContent`; never place source text in `innerHTML`, event-handler attributes, or `eval`-like code. Serialize graph data as JSON, escape `<` as `\u003c` before embedding it in a `<script>`, and keep generated ids separate from display labels so a name cannot break markup or script syntax.
 
 ## Rules
 
