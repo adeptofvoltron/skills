@@ -29,7 +29,7 @@ Read-only. Do not edit repository files, commit, mutate the tracker, or invoke t
 
 2. **Read the context** (navigation; read-only) — current branch, working-tree state, commits ahead of `BASE_BRANCH`, recent files in `SPECS_DIR`, and the user's open PRs when a tracker descriptor exists. Commands and the signal → capability table: `references/context-signals.md`.
 
-3. **Discover the installed skills** — scan the skill roots for `*/SKILL.md` and read only each frontmatter `name` and `description` (never the bodies at this stage). Same-name `.ai/skills/<name>/` folders are overlays; `.ai/skills/`-only folders are repo-local skills. Procedure, roots, and the portable snippet: `references/skill-discovery.md`.
+3. **Discover the installed skills** — scan the skill roots for `om-*/SKILL.md` (only the `om-` set is ever routed) and read only each frontmatter `name` and `description` (never the bodies at this stage). Same-name `.ai/skills/<name>/` folders are overlays; `.ai/skills/`-only folders are repo-local skills. Procedure, roots, and the portable snippet: `references/skill-discovery.md`.
 
 4. **Load the repository's routing data** — in this order: root `AGENTS.md` Task Router (match **every** row), the `help.data` files, then — for knowledge questions — the `knowledge.sources` entries. Shapes, precedence, and the drift checks: `references/routing-sources.md`.
 
@@ -48,11 +48,12 @@ Next: none                       ← knowledge/inventory answer, or nothing to r
 Next: <skill-name> <args>        ← the recommended invocation; skill-name as discovered
 ```
 
-Consumers parse `^Next: none$` | `^Next: ([a-z0-9][a-z0-9-]*)( .*)?$`.
+Consumers parse `^Next: none$` | `^Next: (om-[a-z-]+)( .*)?$` — the same shape as `om-brainstorm`'s.
 
 ## Rules
 
 - The HARD-GATE holds: no writes, no tracker mutations, never run the recommended skill.
+- **`om-` set only.** Route only to skills whose name starts with `om-`. Skills outside the set — other installs, user-level skills, plugins — are never discovered or recommended; a repository source that names one is reported as drift.
 - **No catalog.** Never name a skill from memory or training data. Every recommended skill is one found in step 3; a skill that repository data names but that is not installed is reported as not installed, never recommended as runnable.
 - **Installed descriptions are current behavior; repository data is intended behavior.** When they disagree, surface the divergence — never silently pick one.
 - Ground knowledge answers in files actually read; if nothing covers the question, say where you looked and that the answer is ungrounded.

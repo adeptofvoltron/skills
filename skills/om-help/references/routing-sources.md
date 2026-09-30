@@ -53,6 +53,7 @@ Compare every skill name the sources above mention against the discovered list:
 
 | Finding | Report as |
 |---|---|
+| A source names a skill outside the `om-` set | ⚠️ `<skill>` is named by `<file>` but is outside the `om-` set — `om-help` does not route to it; follow `<file>` directly or rename the skill into the set. |
 | A source names a skill that is not installed | ⚠️ `<skill>` is named by `<file>` but not installed — the route is unavailable until it is installed (the `om-setup-agent-pipeline` coverage check prints the install command) or the data is corrected. |
 | A source describes a skill differently from its installed `description` | ⚠️ `<file>` says `<skill>` does X; the installed skill says Y. The installed description is current behavior; the file is stale or states intent. |
 | A source names a skill under an old name that an installed skill's description now covers | ⚠️ likely renamed — cite both. |

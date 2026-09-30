@@ -20,7 +20,7 @@ Answers "which skill should I use?", "what do I do next?", and "how do I do X he
 
 ## Works with
 
-Recommends whichever installed skill fits; it never invokes one. The `Next:` line is compatible with [om-brainstorm](om-brainstorm.md)'s (a superset — it also allows skill names without the `om-` prefix), so a session orchestrator can act on either. A repo-local `.ai/skills/om-help/SKILL.md` extends it (for example with extra routing rules) through the standard override preflight.
+Recommends whichever installed skill of the `om-` set fits; it never invokes one, and it never routes to skills outside that set (other installs, user-level skills, plugins). The `Next:` line has the same shape as [om-brainstorm](om-brainstorm.md)'s, so a session orchestrator can act on either. A repo-local `.ai/skills/om-help/SKILL.md` extends it (for example with extra routing rules) through the standard override preflight.
 
 ---
 *Source: [`skills/om-help/SKILL.md`](../../skills/om-help/SKILL.md)*
