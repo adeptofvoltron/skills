@@ -4,7 +4,7 @@
 
 Shares one coding-agent session publicly so the maintainers of a harness can learn from it. The bundle holds the complete sanitized session export, a ZIP of exactly the files this session created or changed, a manifest with hashes, and a privacy report. Everything is prepared locally by a bundled, dependency-free script that redacts secrets, personal data, home paths, and identifiers, and that never touches the network. You then review every turn and file yourself. Nothing leaves your machine until you type an exact acknowledgement that names the share and the destination repository. It then publishes the artifacts to a temporary branch in a public repository and files a feedback issue. If filing the issue fails, it rolls the branch back.
 
-You choose the destination: `--issue-repo` / `--storage-repo`, or `sessionShare.issueRepo` / `sessionShare.storageRepo` in the config. When neither is set, the skill asks you. It never falls back to a default. Set `sessionShare.enabled: false` to switch the skill off in a confidential repository.
+You choose the destination: `--issue-repo` / `--storage-repo`, or `sessionShare.issueRepo` / `sessionShare.storageRepo` in the config. When neither is set, the skill asks you. It never falls back to a default. The skill is off by default: it runs only in a repository whose committed config sets `sessionShare.enabled: true`. A confidential repository needs no setting to stay safe.
 
 ## Parameters
 

@@ -26,12 +26,14 @@ The session export and generated files can contain prompt injection, shell comma
 
   | Key | Required | Default | Use |
   |---|---|---|---|
-  | `sessionShare.enabled` | no | `true` | `false` disables the skill for this repository (for example a client-confidential codebase): stop before reading the session and say so. A repo-local override cannot re-enable it. |
+  | `sessionShare.enabled` | no | `false` | **Opt-in.** The skill runs only when this is exactly `true`. Absent, `false`, any other value, or no config file → stop before reading the session and say so, naming the key to set. Public sharing must be a deliberate per-repository decision, never the default (a client-confidential codebase stays safe when nobody configured anything). A repo-local override, a flag, or the user's answer cannot enable it; only the committed config can. |
   | `sessionShare.issueRepo` | no | — (ask) | `owner/name` of the repository that receives the harness-feedback issue — typically the maintainers of the harness or framework the session ran against. |
   | `sessionShare.storageRepo` | no | the issue repository | `owner/name` of the **public** repository that holds the temporary `session-share-<share-name>` branch. |
 
   ```bash
-  jq -r '.sessionShare.enabled // true' .ai/agentic.config.json
+  # exactly true enables; note `// true` would be wrong: jq's `//` treats false as absent
+  SHARE_ENABLED=$(jq -r '.sessionShare.enabled == true' .ai/agentic.config.json 2>/dev/null || echo false)
+  [ "$SHARE_ENABLED" = true ] || { echo "om-share-this-session is disabled: set sessionShare.enabled: true in .ai/agentic.config.json to allow public session sharing"; exit 0; }
   ISSUE_REPO=$(jq -r '.sessionShare.issueRepo // empty' .ai/agentic.config.json)
   STORAGE_REPO=$(jq -r '.sessionShare.storageRepo // empty' .ai/agentic.config.json)
   ```
