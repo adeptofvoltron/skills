@@ -85,10 +85,14 @@ matching lines**:
 q="$QUERY"   # passed as one quoted argument, never spliced into a pattern
 if command -v rg >/dev/null 2>&1; then
   rg --no-ignore --hidden --fixed-strings --line-number --sort path \
-     --max-columns 500 --glob '!node_modules' --glob '!*.pem' --glob '!*.key' \
+     --max-columns 500 --glob '!node_modules' --glob '!.ssh' \
+     --glob '!.npmrc' --glob '!.netrc' --glob '!*.pem' --glob '!*.key' --glob '!*.p12' \
+     --glob '!credentials*' --glob '!secrets*' --glob '!id_rsa*' --glob '!.env*' \
      -- "$q" "$root" | head -n 201
 else
-  grep -rnF --exclude='*.pem' --exclude='*.key' --exclude-dir=node_modules \
+  grep -rnFI --exclude-dir=node_modules --exclude-dir=.ssh \
+     --exclude='.npmrc' --exclude='.netrc' --exclude='*.pem' --exclude='*.key' --exclude='*.p12' \
+     --exclude='credentials*' --exclude='secrets*' --exclude='id_rsa*' --exclude='.env*' \
      -- "$q" "$root" 2>/dev/null | sort | head -n 201
 fi
 ```
@@ -98,7 +102,9 @@ fi
 - `--no-ignore` matters: install directories are usually ignored by the VCS, and
   a search that silently skips them returns a false "no matches".
 - Skip credential and key material (`.npmrc`, `.netrc`, `*.pem`, `*.key`,
-  `*.p12`, `credentials*`, `secrets*`, `id_rsa*`) and binary files. Never print
-  their contents even when matched.
+  `*.p12`, `credentials*`, `secrets*`, `id_rsa*`, `.env*`, the `.ssh/` directory) and binary files —
+  the snippet above excludes exactly this list (keep the two in sync; `rg` skips
+  binary files by default, `grep -I` does the same). Never print their contents
+  even when matched.
 - Never widen the search to the whole install directory or to other
   dependencies. A second query is a new, equally narrow search.
