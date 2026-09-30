@@ -1,6 +1,6 @@
 ---
 name: om-auto-sec-report-pr
-description: Paranoid OWASP-style security analysis of ONE unit (a PR, spec, or branch diff) — severity-ranked findings, non-obvious attack vectors, same-pattern hotspots, and "go deeper" follow-up runs. Ships a redacted docs-PR report (live exploitable details withheld) or a fragment for `om-auto-sec-report`. Use for "security review of PR 123".
+description: Paranoid OWASP-style security analysis of ONE unit (a PR, spec, or branch diff) — severity-ranked findings, non-obvious attack vectors, same-pattern hotspots, and "go deeper" follow-up runs. Writes a redacted report (live exploitable details withheld), kept local by default or shipped as a docs PR, or a fragment for `om-auto-sec-report`. Use for "security review of PR 123".
 ---
 
 # Auto Security Report — Single Unit
@@ -67,8 +67,8 @@ stops naming it when missing), `om-auto-sec-report` (optional driver).
 
 9. **Emit.** Artifact shapes, the withheld placeholder, and the HTML mirror rules: `references/report-templates.md`.
    - **Sub-unit mode** (`--out-fragment`): write the fragment — level-2 heading, summary bullets, findings, vector table, next steps, the `sec-unit-status` marker, and the `sec-unit-withheld` marker — and nothing else: no PR, no labels, no review pass.
-   - **Standalone, `securityReport.publish: "local"`**: write the markdown report and HTML mirror under `.ai/tmp/om-auto-sec-report-pr/<slug>/` (git-ignored) and report the path. Nothing is committed or published.
-   - **Standalone, `"pr"` (default)**: write the same two artifacts to that directory, run the step-10 gate, then invoke `om-auto-create-pr` with the delegation brief from `references/report-templates.md` (`--slug sec-report-pr-<slug>`, forwarding `--force`). It copies the artifacts into `ANALYSIS_DIR`, opens the docs-only PR, applies `documentation` + `security` + `skip-qa` + the priority chosen by the severity rule + `risk-low`, runs the `om-auto-review-pr` pass, posts the summary comment, and owns resumability. Never merge.
+   - **Standalone, `securityReport.publish: "local"` (default)**: write the markdown report and HTML mirror under `.ai/tmp/om-auto-sec-report-pr/<slug>/` (git-ignored) and report the path. Nothing is committed or published.
+   - **Standalone, `"pr"`**: write the same two artifacts to that directory, run the step-10 gate, then invoke `om-auto-create-pr` with the delegation brief from `references/report-templates.md` (`--slug sec-report-pr-<slug>`, forwarding `--force`). It copies the artifacts into `ANALYSIS_DIR`, opens the docs-only PR, applies `documentation` + `security` + `skip-qa` + the priority chosen by the severity rule + `risk-low`, runs the `om-auto-review-pr` pass, posts the summary comment, and owns resumability. Never merge.
 
 10. **Pre-publish gate** (every mode, before anything leaves the machine or the fragment is handed back): no trailing whitespace; the secret-leak grep and the disclosure check from `references/agentic-setup.md` come back clean; every PR/issue/CVE link resolves; the artifacts were re-read end to end. A hit → redact, rewrite, re-run the gate.
 

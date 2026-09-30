@@ -1,6 +1,6 @@
 ---
 name: om-auto-sec-report
-description: Security report over a window — merged PRs since a date or PR number (default last 7 days), or one branch or spec. Runs `om-auto-sec-report-pr` per unit, aggregates severity-ranked findings, a risk heatmap, and one "go deeper" list into a redacted docs-only PR. Use for "weekly security report", "security review of everything merged since X".
+description: Security report over a window — merged PRs since a date or PR number (default last 7 days), or one branch or spec. Runs `om-auto-sec-report-pr` per unit, aggregates severity-ranked findings, a risk heatmap, and one "go deeper" list into one redacted report, kept local by default or shipped as a docs-only PR. Use for "weekly security report", "security review of everything merged since X".
 ---
 
 # Auto Security Report — Driver
@@ -73,8 +73,8 @@ publish mode), `om-auto-continue-pr` (resume after the PR exists).
 6. **Pre-publish gate.** Before anything leaves the machine: no trailing whitespace; the secret-leak grep and the disclosure check from `references/agentic-setup.md` pass against the aggregate and its HTML, using the withheld file recorded on every ledger line with a count above zero (fail closed); every PR/issue/CVE link resolves; the aggregate was re-read end to end. A hit → redact, rewrite, re-run the gate.
 
 7. **Deliver.**
-   - **`securityReport.publish: "local"`** — the aggregate and its HTML stay in `$RUN_DIR`; report the path. Nothing is committed.
-   - **`"pr"` (default)** — invoke `om-auto-create-pr` with the delegation brief from `references/report-templates.md` (`--slug sec-report-<slug>`, forwarding `--force`). It copies the two artifacts into `ANALYSIS_DIR`, opens the docs-only PR (title `docs(analysis): add security report for {window caption}`), applies `documentation` + `security` + `skip-qa` + the priority chosen by the severity rule + `risk-low`, runs the `om-auto-review-pr` pass, posts the summary comment, and owns resumability through `om-auto-continue-pr`. Never merge.
+   - **`securityReport.publish: "local"` (default)** — the aggregate and its HTML stay in `$RUN_DIR`; report the path. Nothing is committed.
+   - **`"pr"`** — invoke `om-auto-create-pr` with the delegation brief from `references/report-templates.md` (`--slug sec-report-<slug>`, forwarding `--force`). It copies the two artifacts into `ANALYSIS_DIR`, opens the docs-only PR (title `docs(analysis): add security report for {window caption}`), applies `documentation` + `security` + `skip-qa` + the priority chosen by the severity rule + `risk-low`, runs the `om-auto-review-pr` pass, posts the summary comment, and owns resumability through `om-auto-continue-pr`. Never merge.
 
 8. **Clean up.** Once the report is delivered (PR opened, or local artifacts written), remove `$RUN_DIR/fragments/` — the aggregate carries them verbatim. Keep the ledger until the PR exists; never delete `.ai/tmp/om-auto-sec-report-pr/withheld/`.
 

@@ -2,7 +2,7 @@
 
 > 🤖 Autonomous — runs end-to-end without supervision
 
-Produces one security report for a window of work: every PR merged into the base since a date or a PR number (the last 7 days by default), or a single branch or spec. It runs `om-auto-sec-report-pr` on each unit, then combines the results into one report. The report has totals by severity, an OWASP risk heatmap, a deep-vector coverage matrix, the per-unit findings unchanged, and one deduplicated "go deeper" list with exactly one recommended next run. It ships as a docs-only PR through `om-auto-create-pr` or stays local. Findings that are exploitable in live code appear only as withheld placeholders. A partial unit never stops the batch. An interrupted run resumes from a local ledger when re-run with the same slug.
+Produces one security report for a window of work: every PR merged into the base since a date or a PR number (the last 7 days by default), or a single branch or spec. It runs `om-auto-sec-report-pr` on each unit, then combines the results into one report. The report has totals by severity, an OWASP risk heatmap, a deep-vector coverage matrix, the per-unit findings unchanged, and one deduplicated "go deeper" list with exactly one recommended next run. It stays local by default, or ships as a docs-only PR through `om-auto-create-pr` when `securityReport.publish` is `pr`. Findings that are exploitable in live code appear only as withheld placeholders. A partial unit never stops the batch. An interrupted run resumes from a local ledger when re-run with the same slug.
 
 ## Parameters
 

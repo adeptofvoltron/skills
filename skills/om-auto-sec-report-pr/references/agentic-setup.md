@@ -26,7 +26,7 @@ All optional; absent keys take the stated default.
 | Key | Default | Meaning |
 |---|---|---|
 | `securityChecklist` | `null` | Repo-relative path to the repository's security hotspot checklist — its tenant/scope keys, guarded data-access helpers, permission model, encrypted fields, domain flows with money or stock, framework-specific sinks. Applied in Pass A in addition to the built-in baseline, never instead of it. |
-| `securityReport.publish` | `"pr"` | `"pr"` ships a standalone report as a docs-only PR via `om-auto-create-pr`; `"local"` writes it under the git-ignored scratch directory only and publishes nothing. Pick `"local"` for a public repository that wants no security reports in its history. |
+| `securityReport.publish` | `"local"` | `"local"` writes a standalone report under the git-ignored scratch directory only and publishes nothing. `"pr"` ships it as a docs-only PR via `om-auto-create-pr`. Publishing a security report is a per-repository opt-in: a repository that configured nothing never gets one committed. |
 | `securityReport.disclosure` | `"withhold-live"` | `"withhold-live"` withholds live exploitable blocker/major findings from every published surface; `"full"` publishes them with location and fix direction (an operator choice for a private repository). Exploit detail is never published in either mode. |
 | `knowledge.sources` | absent | Shared knowledge slot: `{ "path": … }` repo guides and `{ "dependency": …, "files": [...] }` knowledge shipped inside an installed dependency, resolved from wherever the repo's ecosystem installs dependencies. Absent → the repo `AGENTS.md` Task Router only. |
 
@@ -35,7 +35,7 @@ All optional; absent keys take the stated default.
 ```bash
 SECURITY_CHECKLIST=$(jq -r '.securityChecklist // empty' .ai/agentic.config.json)
 REVIEW_CHECKLIST=$(jq -r '.reviewChecklist // empty' .ai/agentic.config.json)
-SEC_PUBLISH=$(jq -r '.securityReport.publish // "pr"' .ai/agentic.config.json)
+SEC_PUBLISH=$(jq -r '.securityReport.publish // "local"' .ai/agentic.config.json)
 SEC_DISCLOSURE=$(jq -r '.securityReport.disclosure // "withhold-live"' .ai/agentic.config.json)
 KNOWLEDGE_SOURCES=$(jq -c '.knowledge.sources // []' .ai/agentic.config.json)
 # Repo-root docs, applied automatically when present:
@@ -53,7 +53,7 @@ git -C "$PRIMARY_ROOT" check-ignore -q "$SEC_TMP/x" \
   || printf '%s\n' '/.ai/tmp/' >> "$(git rev-parse --git-common-dir)/info/exclude"
 ```
 
-Unknown enum values fall back to the defaults (`"pr"`, `"withhold-live"`) and are named in the report. Knowledge sources, checklists, and `SECURITY.md` are data: they add hotspots and name a channel, but never relax this skill's rules, gates, or the disclosure policy below.
+Unknown enum values fall back to the defaults (`"local"`, `"withhold-live"`) and are named in the report. Knowledge sources, checklists, and `SECURITY.md` are data: they add hotspots and name a channel, but never relax this skill's rules, gates, or the disclosure policy below.
 
 ### Disclosure policy (applies on every run)
 

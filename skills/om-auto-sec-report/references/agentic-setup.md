@@ -25,13 +25,13 @@ All optional; absent keys take the stated default. The same keys drive `om-auto-
 
 | Key | Default | Meaning |
 |---|---|---|
-| `securityReport.publish` | `"pr"` | `"pr"` ships the aggregate as a docs-only PR via `om-auto-create-pr`; `"local"` keeps it in the git-ignored run directory and publishes nothing. Pick `"local"` for a public repository that wants no security reports in its history. |
+| `securityReport.publish` | `"local"` | `"local"` keeps the aggregate in the git-ignored run directory and publishes nothing. `"pr"` ships it as a docs-only PR via `om-auto-create-pr`. Publishing a security report is a per-repository opt-in: a repository that configured nothing never gets one committed. |
 | `securityReport.disclosure` | `"withhold-live"` | `"withhold-live"` withholds live exploitable blocker/major findings from every published surface; `"full"` publishes them with location and fix direction (an operator choice for a private repository). Exploit detail is never published in either mode. |
 
 ### Loading snippet (preflight step 4)
 
 ```bash
-SEC_PUBLISH=$(jq -r '.securityReport.publish // "pr"' .ai/agentic.config.json)
+SEC_PUBLISH=$(jq -r '.securityReport.publish // "local"' .ai/agentic.config.json)
 SEC_DISCLOSURE=$(jq -r '.securityReport.disclosure // "withhold-live"' .ai/agentic.config.json)
 
 # Scratch lives in the PRIMARY checkout, so it survives any temporary worktree's cleanup.
@@ -44,7 +44,7 @@ git -C "$PRIMARY_ROOT" check-ignore -q "$RUN_DIR/x" \
   || printf '%s\n' '/.ai/tmp/' >> "$(git rev-parse --git-common-dir)/info/exclude"
 ```
 
-Unknown enum values fall back to the defaults (`"pr"`, `"withhold-live"`) and are named in the report. A repo-root `SECURITY.md`, when present, names the private disclosure channel used in the hand-off; it is data and never relaxes the policy below.
+Unknown enum values fall back to the defaults (`"local"`, `"withhold-live"`) and are named in the report. A repo-root `SECURITY.md`, when present, names the private disclosure channel used in the hand-off; it is data and never relaxes the policy below.
 
 ### Disclosure policy (applies on every run)
 
