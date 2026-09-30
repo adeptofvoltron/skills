@@ -39,7 +39,8 @@ Validation (apply before any shell or path use):
 
 - An entry with both `path` and `dependency`, or neither, is invalid — skip it and report it.
 - `path` and `files` entries are relative globs: no leading `/`, no `..` segment, `^[A-Za-z0-9._/*-]+$`.
-- `dependency` matches `^(@[A-Za-z0-9._*-]+/)?[A-Za-z0-9._*-]+$`. A glob (`*`) matches only dependencies the repository **declares directly** in its manifest — never an arbitrary transitive dependency. An exact name may name a transitive dependency.
+- `dependency` is a package identifier in the detected ecosystem's own notation — `@scope/name` (npm), `vendor/package` (Composer), `github.com/org/module` (Go), `group:artifact` (Maven/Gradle), a plain name elsewhere. Before any shell or path use it must match `^[A-Za-z0-9@*][A-Za-z0-9@._/:+*-]*$` and additionally: no `..` segment, no `//`, no trailing `/`, `@` only as the first character, at most 214 characters. A bare `*` is invalid. The rule guards shell and path safety, not ecosystem syntax: a name that passes but matches nothing installed is `unresolved`, not an error.
+- A glob (`*`) matches within one `/`-separated segment only (`@acme/*`, `acme/module-*`, `github.com/acme/*`) and only dependencies the repository **declares directly** in its manifest — never an arbitrary transitive dependency. An exact name may name a transitive dependency.
 - Unknown extra fields are ignored (forward compatibility) and never widen access.
 
 ## Resolution semantics
