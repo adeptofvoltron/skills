@@ -55,9 +55,10 @@ Local, git-ignored, and the resume point before the PR exists. One line per unit
 
 - [ ] `om-auto-sec-report-pr pr:1456 --base {BASE} --slug pr-1456 --out-fragment {RUN_DIR}/fragments/pr-1456.md` — {title}
 - [x] `om-auto-sec-report-pr pr:1450 …` — complete · withheld: 0
-- [x] `om-auto-sec-report-pr pr:1447 …` — ⚠ partial — {reason} · withheld: 1
+- [x] `om-auto-sec-report-pr pr:1447 …` — ⚠ partial — {reason} · withheld: 1 `.ai/tmp/om-auto-sec-report-pr/withheld/pr-1447-2026-09-29.md`
 ```
 
 - Write the ledger before the first unit runs; flip each line as soon as its fragment is read back.
+- The withheld count and file come from the fragment's third line, `<!-- sec-unit-withheld: {W} {path | -} -->` (pattern in `om-auto-sec-report-pr`'s fragment contract); copy the path verbatim. A fragment without that marker, or with a count above zero and `-`, is recorded as `⚠ partial — withheld marker missing` and fails the step-6 gate until the unit is re-run.
 - Re-run with the same `--slug` (the default slug is stable for the same window on the same day): units whose fragment already starts with `<!-- sec-unit-status: complete` on its second line are skipped; partial, failed, and pending units run again.
 - Once the report PR exists, resumability belongs to that PR (`om-auto-continue-pr`); the ledger is then disposable.

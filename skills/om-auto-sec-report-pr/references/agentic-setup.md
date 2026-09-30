@@ -60,9 +60,23 @@ Unknown enum values fall back to the defaults (`"pr"`, `"withhold-live"`) and ar
 A security report is a disclosure. Before any artifact, fragment, delegation brief, comment, or final report is written:
 
 1. **Never, in any mode:** exploit payloads, working attack strings, step-by-step reproduction, proof-of-concept code, secrets, internal hostnames, personal data. A finding states *what* class of weakness exists *where* and the *direction* of the fix — never *how to exploit it*.
-2. **Withhold (default `withhold-live`):** a blocker or major finding whose vulnerable code is live at `origin/$BASE` tip and plausibly exploitable is withheld. Its full entry — location, why, fix, its apply-elsewhere candidates, and next steps pointing at it — goes only to `$WITHHELD_DIR/<slug>.md`. Every published surface carries the placeholder from `references/report-templates.md` (severity + OWASP category, no path, no symbol, no line). Findings in unmerged code (open PR, branch) and spec findings are not live and publish normally.
+2. **Withhold (default `withhold-live`):** a blocker or major finding whose vulnerable code is live at `origin/$BASE` tip and plausibly exploitable is withheld. Its full entry — location, why, fix, its apply-elsewhere candidates, and next steps pointing at it — goes only to this run's withheld file `$WITHHELD` (the path is defined once, in `references/report-templates.md` → Paths), including its `disclosure-tokens` block. Every published surface carries the placeholder from `references/report-templates.md` (severity + OWASP category, no path, no symbol, no line). Findings in unmerged code (open PR, branch) and spec findings are not live and publish normally.
 3. **Hand-off:** when anything was withheld, the final report carries a `⚠️ NEEDS HUMAN CONFIRMATION` line: the count, the local withheld path, and the private channel — the repo's `SECURITY.md` when present, otherwise "the maintainers' private security channel". The skill never sends withheld detail anywhere itself. In an ephemeral environment (CI) the withheld file does not survive; the line then says to re-run the unit locally.
-4. **Disclosure check** (pre-publish gate): every location, path, and symbol named in `$WITHHELD_DIR/<slug>.md` is absent from every file about to be published — `grep -F -f` of those tokens against the artifacts returns nothing.
+4. **Disclosure check** (pre-publish gate, fail closed): none of the tokens in the `disclosure-tokens` block of `$WITHHELD` appears in any file about to be published or handed back — the report and its HTML mirror, or the fragment in sub-unit mode. Run it with the withheld count from the executive summary; a real hit (`rc=0`) → rewrite and re-run the gate; any other failure (withheld count above zero but the file missing or without tokens, a grep error) → stop, publish nothing, keep the artifacts local, and say why in the report:
+
+   ```bash
+   # Fail closed: W = withheld count, F = withheld file, then every artifact about to leave the machine.
+   disclosure_check() {
+     W=$1; F=$2; shift 2
+     [ "$W" -eq 0 ] && return 0
+     [ -s "$F" ] || { echo "GATE FAIL: $W withheld but $F is missing or empty"; return 1; }
+     T=$(mktemp)
+     sed -n '/^<!-- disclosure-tokens$/,/^-->$/{/^<!-- disclosure-tokens$/d;/^-->$/d;/^[[:space:]]*$/d;p;}' "$F" > "$T"
+     [ -s "$T" ] || { echo "GATE FAIL: no disclosure tokens in $F"; rm -f "$T"; return 1; }
+     grep -nF -f "$T" -- "$@"; rc=$?; rm -f "$T"
+     [ "$rc" -eq 1 ] || { echo "GATE FAIL: withheld detail found or grep error (rc=$rc)"; return 1; }
+   }
+   ```
 5. **Secret-leak grep** (pre-publish gate) over every artifact about to leave the machine; any match → redact to `{REDACTED}` and re-run:
 
    ```bash

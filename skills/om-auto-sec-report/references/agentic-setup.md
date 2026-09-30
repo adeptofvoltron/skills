@@ -53,7 +53,21 @@ The aggregate republishes what the units found, so the unit skill's policy carri
 1. **Never, in any mode:** exploit payloads, working attack strings, step-by-step reproduction, proof-of-concept code, secrets, internal hostnames, personal data.
 2. **Withheld findings** (default `withhold-live`) enter the aggregate only as the units' placeholders (severity + OWASP category, no path, symbol, or line) and as counts. Their detail stays in the units' files under `$WITHHELD_DIR`; this skill never copies, summarizes, or quotes it — not into the aggregate, the delegation brief, a comment, or the final report.
 3. **Hand-off:** when any unit withheld anything, the final report carries a `⚠️ NEEDS HUMAN CONFIRMATION` line: the total count, the local withheld files, and the private channel — `SECURITY.md` when present, otherwise "the maintainers' private security channel". In an ephemeral environment (CI) the withheld files do not survive; the line then names the units to re-run locally.
-4. **Disclosure check** (pre-publish gate): every location, path, and symbol named in this run's withheld files is absent from the aggregate and its HTML — `grep -F -f` of those tokens against both files returns nothing.
+4. **Disclosure check** (pre-publish gate, fail closed): for every ledger line whose withheld count is above zero, none of the tokens in the `disclosure-tokens` block of that line's withheld file appears in the aggregate or its HTML. The withheld files come from the ledger (`references/unit-queue.md`), never from a reconstructed path; a path that does not match the withheld marker pattern, or ledger counts that do not add up to the aggregate's withheld total, fail the gate. A real hit (`rc=0`) → rewrite and re-run the gate; any other failure → stop, publish nothing, keep the aggregate local, and say why in the report:
+
+   ```bash
+   # Fail closed: W = withheld count, F = withheld file, then the aggregate and its HTML; call once per ledger line with W > 0.
+   disclosure_check() {
+     W=$1; F=$2; shift 2
+     [ "$W" -eq 0 ] && return 0
+     [ -s "$F" ] || { echo "GATE FAIL: $W withheld but $F is missing or empty"; return 1; }
+     T=$(mktemp)
+     sed -n '/^<!-- disclosure-tokens$/,/^-->$/{/^<!-- disclosure-tokens$/d;/^-->$/d;/^[[:space:]]*$/d;p;}' "$F" > "$T"
+     [ -s "$T" ] || { echo "GATE FAIL: no disclosure tokens in $F"; rm -f "$T"; return 1; }
+     grep -nF -f "$T" -- "$@"; rc=$?; rm -f "$T"
+     [ "$rc" -eq 1 ] || { echo "GATE FAIL: withheld detail found or grep error (rc=$rc)"; return 1; }
+   }
+   ```
 5. **Secret-leak grep** (pre-publish gate) over both artifacts; any match → redact to `{REDACTED}` and re-run:
 
    ```bash

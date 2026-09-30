@@ -35,7 +35,18 @@ In `pr` publish mode `om-auto-create-pr` copies the two report files to `${ANALY
 Details withheld for private disclosure: this weakness is live on the base branch. No location is published until it is fixed.
 ```
 
-The placeholder names no path, symbol, line, endpoint, or apply-elsewhere candidate. The full entry, in the shape above, goes to `$WITHHELD` under a `# Withheld findings — {target caption} ({DATE})` heading, with a closing line naming the private channel.
+The placeholder names no path, symbol, line, endpoint, or apply-elsewhere candidate. The full entry, in the shape above, goes to `$WITHHELD` under a `# Withheld findings — {target caption} ({DATE})` heading, with a closing line naming the private channel. The file ends with one `disclosure-tokens` block that the pre-publish gate reads (`references/agentic-setup.md` → Disclosure check):
+
+```markdown
+<!-- disclosure-tokens
+src/path/to/file.ext
+src/path/to/file.ext:42
+ClassName::methodName
+/api/route/that/is/affected
+-->
+```
+
+One fixed string per line, no blank lines inside the block: every path, `file:line`, symbol, and endpoint of every withheld finding, plus the paths of its apply-elsewhere candidates. A withheld finding without tokens is invalid — the gate fails closed on an empty block.
 
 ## Standalone report (`$REPORT_MD`)
 
@@ -99,6 +110,7 @@ A vector row whose location belongs to a withheld finding reads `risk surfaced |
 ```markdown
 ## {target caption}
 <!-- sec-unit-status: complete -->
+<!-- sec-unit-withheld: {W} {withheld file relative to the primary checkout | -} -->
 
 - {count} findings: {N blocker, M major, L minor, K nit, I info}; {W} withheld.
 - Top OWASP categories: {…}. Deep vectors surfaced: {…}.
@@ -115,6 +127,7 @@ A vector row whose location belongs to a withheld finding reads `risk surfaced |
 
 - The first line is the level-2 heading; the second line is the status marker. A partial run carries a reason: `<!-- sec-unit-status: partial — {reason} -->`. The driver parses exactly `^<!-- sec-unit-status: (complete|partial)`.
 - No report-wide front matter, limits, or appendix — the driver owns those.
+- The third line is the withheld marker: the count and the path of `$WITHHELD` relative to the primary checkout (e.g. `.ai/tmp/om-auto-sec-report-pr/withheld/pr-1447-2026-09-29.md`), or `-` when the count is `0`. The driver reads the path from here and never reconstructs it. Parse: `^<!-- sec-unit-withheld: ([0-9]+) (\.ai/tmp/om-auto-sec-report-pr/withheld/[A-Za-z0-9._-]+\.md|-) -->$`.
 - Withheld detail goes to `$WITHHELD`, never into the fragment; the fragment's summary states the withheld count.
 
 ## Delegation brief (`pr` publish mode)

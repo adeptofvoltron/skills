@@ -64,13 +64,13 @@ publish mode), `om-auto-continue-pr` (resume after the PR exists).
    om-auto-sec-report-pr {unit} --base {BASE} --slug {unit-slug} [--deep-scan] --out-fragment $RUN_DIR/fragments/{unit-slug}.md
    ```
 
-   Passing `--slug` keeps each unit's withheld file at a known path (`$WITHHELD_DIR/{unit-slug}-{DATE}.md`) for the step-6 disclosure check. After each unit, read the fragment's status marker (`^<!-- sec-unit-status: (complete|partial)`) and update the ledger line: `complete`, `⚠ partial — {reason}`, or `⚠ failed — no fragment written`, plus the withheld count from the fragment's summary. A partial or failed unit never aborts the batch — record the reason and continue. The target PRs are read-only: an `in-progress` lock on an open PR does not skip it.
+   After each unit, read the fragment's status marker (`^<!-- sec-unit-status: (complete|partial)`) and its withheld marker (`sec-unit-withheld`, `references/unit-queue.md`), and update the ledger line: `complete`, `⚠ partial — {reason}`, or `⚠ failed — no fragment written`, plus the withheld count and withheld file from that marker. Never reconstruct a withheld path — a run resumed on a later day would compute a different date. A partial or failed unit never aborts the batch — record the reason and continue. The target PRs are read-only: an `in-progress` lock on an open PR does not skip it.
 
 4. **Aggregate.** Build the aggregate report per `references/report-templates.md`: window line, executive summary with totals and withheld count, consolidated next steps (deduplicated on exact command equality, highest-severity justification kept, exactly one `[recommended]` across the whole list), OWASP risk heatmap, deep-vector coverage matrix, per-unit fragments concatenated **verbatim** in queue order, and the queue appendix with every unit's command and status. Never paraphrase a fragment.
 
 5. **Render the HTML mirror** — same content, same redactions, stand-alone, no JavaScript, no remote assets (`references/report-templates.md`).
 
-6. **Pre-publish gate.** Before anything leaves the machine: no trailing whitespace; the secret-leak grep and the disclosure check from `references/agentic-setup.md` pass against the aggregate and its HTML, using every withheld file this run's units wrote; every PR/issue/CVE link resolves; the aggregate was re-read end to end. A hit → redact, rewrite, re-run the gate.
+6. **Pre-publish gate.** Before anything leaves the machine: no trailing whitespace; the secret-leak grep and the disclosure check from `references/agentic-setup.md` pass against the aggregate and its HTML, using the withheld file recorded on every ledger line with a count above zero (fail closed); every PR/issue/CVE link resolves; the aggregate was re-read end to end. A hit → redact, rewrite, re-run the gate.
 
 7. **Deliver.**
    - **`securityReport.publish: "local"`** — the aggregate and its HTML stay in `$RUN_DIR`; report the path. Nothing is committed.
