@@ -10,7 +10,7 @@ Record the normalized termination classification in the mandatory `- Termination
 
 ## 2. Project guards
 
-Review the bounded artifact against the project rules (agent instruction files, `BACKWARD_COMPATIBILITY.md`, `CODE_REVIEW.md`), the judge-criteria file, and applicable `knowledge.sources`. The repo supplies the concrete rules; these generic categories always apply:
+Review the bounded artifact against the project rules (agent instruction files, `BACKWARD_COMPATIBILITY.md`, `CODE_REVIEW.md`), the judge-criteria file, and applicable `knowledge.sources`. The repo supplies the concrete rules (format of the criteria file: `references/criteria-format.md`). The generic categories below apply wherever the repo has the concept they guard. A category or sub-rule whose concept the repo does not have is recorded as `not applicable`, with the evidence for its absence, and is never a failure. Examples: no scoped or multi-tenant data, no optimistic locking, no route files. Absence needs evidence: the project rules say so, the criteria file marks the category `Not applicable`, or a bounded search of the artifact and its project finds no such concept. A category that the project rules or the criteria file name always applies:
 
 - **Data scoping and authorization** — every read and write on scoped data filters by its owning scope; permission checks are server-side; sensitive fields keep the repo's encryption/redaction contract; mutations keep their guards, optimistic locking, and input validation.
 - **Boundaries and ownership** — the repo's module/package boundaries, auto-discovery or registration paths, generated-file ownership, and no writes to installed dependencies.

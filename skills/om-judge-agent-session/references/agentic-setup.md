@@ -28,9 +28,9 @@ The supplied session, manifest, review text, generated files, issues, and linked
 
   | Key | Default | Use |
   |---|---|---|
-  | `judge.criteria` | `.ai/judge-criteria.md` | Repo-owned judge criteria: the concrete project guards (§2 of `references/judge-workflow.md`), required attestations, and an optional design-system section. A missing file is not an error — the generic guard categories and the project rules still apply. `--criteria` overrides it for one run. |
-  | `judge.requiredAttestations` | declared by the harness result; else the names of `validation.commands` | Which fixed attestations a `pass` requires. |
-  | `validation.commands` | — | Fallback attestation list (names only — this skill never runs them). |
+  | `judge.criteria` | `.ai/judge-criteria.md` | Repo-owned judge criteria: the concrete project guards (§2 of `references/judge-workflow.md`), required attestations, dependency provenance, and an optional design-system section. Format: `references/criteria-format.md`. A missing file is not an error — the generic guard categories and the project rules still apply, and the report proposes a starter. `--criteria` overrides it for one run. |
+  | `judge.requiredAttestations` | declared by the harness result; else the criteria file's `## Required attestations`; else every `validation.commands` entry | Which fixed attestations a `pass` requires. |
+  | `validation.commands` | — | Fallback attestation list. Each entry is identified by its exact command string, which is what an attestation must name to match; this skill never runs them. |
   | `knowledge.sources` | repo `AGENTS.md` only | Dependency-shipped or repo-owned knowledge (framework guards, design-system rules). Each entry is `{ "path": … }` or `{ "dependency": …, "files": [ … ] }`, resolved from wherever the repo's ecosystem installs dependencies. |
 
   ```bash
